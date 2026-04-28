@@ -61,3 +61,30 @@ Notes:
 - Guests can browse, search, and read content without logging in.
 - Checkout and wishlist are typical registered-user actions.
 - Admin roles manage products, orders, and site content.
+
+# Checkout Activity Diagram (Easy Read)
+
+```mermaid
+flowchart TD
+    Start([Start]) --> Cart[Open cart]
+    Cart --> Review[Review items]
+    Review --> Edit{Need changes?}
+    Edit -- Yes --> Update[Update quantities/remove items]
+    Update --> Review
+    Edit -- No --> Checkout[Proceed to checkout]
+
+    Checkout --> LoginCheck{Logged in?}
+    LoginCheck -- No --> Auth[Login or register]
+    Auth --> Address[Enter shipping address]
+    LoginCheck -- Yes --> Address
+
+    Address --> Shipping[Choose shipping method]
+    Shipping --> Payment[Select payment method]
+    Payment --> Confirm[Review order summary]
+
+    Confirm --> Pay{Payment approved?}
+    Pay -- No --> Payment
+    Pay -- Yes --> Place[Place order]
+    Place --> Success[Show order confirmation]
+    Success --> End([End])
+```
