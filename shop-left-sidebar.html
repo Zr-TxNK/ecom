@@ -220,39 +220,17 @@
                                         <li class="hm-minicart">
                                             <div class="hm-minicart-trigger">
                                                 <span class="item-icon"></span>
-                                                <span class="item-text">£80.00
-                                                    <span class="cart-item-count">2</span>
+                                                <span class="item-text">
+                                                    <span id="minicart-header-total">$0.00</span>
+                                                    <span class="cart-item-count">0</span>
                                                 </span>
                                             </div>
                                             <span></span>
                                             <div class="minicart">
-                                                <ul class="minicart-product-list">
-                                                    <li>
-                                                        <a href="single-product.html" class="minicart-product-image">
-                                                            <img src="images/product/small-size/5.jpg" alt="cart products">
-                                                        </a>
-                                                        <div class="minicart-product-details">
-                                                            <h6><a href="single-product.html">Aenean eu tristique</a></h6>
-                                                            <span>£40 x 1</span>
-                                                        </div>
-                                                        <button class="close" title="Remove">
-                                                            <i class="fa fa-close"></i>
-                                                        </button>
-                                                    </li>
-                                                    <li>
-                                                        <a href="single-product.html" class="minicart-product-image">
-                                                            <img src="images/product/small-size/6.jpg" alt="cart products">
-                                                        </a>
-                                                        <div class="minicart-product-details">
-                                                            <h6><a href="single-product.html">Aenean eu tristique</a></h6>
-                                                            <span>£40 x 1</span>
-                                                        </div>
-                                                        <button class="close" title="Remove">
-                                                            <i class="fa fa-close"></i>
-                                                        </button>
-                                                    </li>
+                                                <ul class="minicart-product-list" id="minicart-items">
+                                                    <!-- Dynamically rendered by JS -->
                                                 </ul>
-                                                <p class="minicart-total">SUBTOTAL: <span>£80.00</span></p>
+                                                <p class="minicart-total">SUBTOTAL: <span id="minicart-subtotal">$0.00</span></p>
                                                 <div class="minicart-button">
                                                     <a href="shopping-cart.html" class="li-button li-button-fullwidth li-button-dark">
                                                         <span>View Full Cart</span>
@@ -1512,6 +1490,13 @@
             let currentKeyword = "";     // Current search keyword
 
             // -------------------------------------------------------
+            // Cart State: Array to hold cart items
+            // Each item is an object like: { id: "1", quantity: 2 }
+            // Load from localStorage so cart persists across pages
+            // -------------------------------------------------------
+            let cart = JSON.parse(localStorage.getItem("cart") || "[]");
+
+            // -------------------------------------------------------
             // Step 1: User navigates to Shop page -> DOMContentLoaded
             // -------------------------------------------------------
             document.addEventListener("DOMContentLoaded", function() {
@@ -1519,6 +1504,8 @@
                 setupCategoryLinks();
                 setupSearchHandlers();
                 setupTagLinks();
+                renderMiniCart();
+                setupCartListener();
                 setupClearFilter();
             });
 
@@ -1759,7 +1746,7 @@
                         (category ? '<p style="font-size:12px; color:#999; margin-top:5px;"><i class="fa fa-tag"></i> ' + escapeHtml(category) + '</p>' : '') +
                         '</div>' +
                         '<div class="add-actions"><ul class="add-actions-link">' +
-                        '<li class="add-cart active"><a href="shopping-cart.html">Add to cart</a></li>' +
+                        '<li class="add-cart active"><button class="add-to-cart" data-id="' + item.id + '" style="background:none;border:none;color:inherit;cursor:pointer;padding:0;font:inherit;">Add to cart</button></li>' +
                         '<li><a href="#" title="quick view" class="quick-view-btn" data-toggle="modal" data-target="#exampleModalCenter"><i class="fa fa-eye"></i></a></li>' +
                         '<li><a class="links-details" href="wishlist.html"><i class="fa fa-heart-o"></i></a></li>' +
                         '</ul></div></div></div></div>';
@@ -1858,6 +1845,184 @@
                 div.textContent = str;
                 return div.innerHTML;
             }
+
+            // =========================================================
+            // EVENT DELEGATION: Add to Cart
+            // =========================================================
+
+            // -------------------------------------------------------
+            // Setup: Attach a SINGLE click listener to the parent
+            // container using Event Delegation. Instead of adding a
+            // listener to every .add-to-cart button, we listen on
+            // #product-container because click events "bubble up"
+            // from children to ancestors.
+            // -------------------------------------------------------
+            function setupCartListener() {
+                var productContainer = document.getElementById("product-container");
+                if (!productContainer) return;
+
+                productContainer.addEventListener("click", function (event) {
+                    // event.target is the actual element clicked.
+                    // Use .closest() to check if the click was on (or inside)
+                    // a button with the class .add-to-cart.
+                    // This handles clicks on child elements inside the button too.
+                    var button = event.target.closest(".add-to-cart");
+
+                    // If the click was NOT on an .add-to-cart button, exit early.
+                    if (!button) return;
+
+                    // Grab the product ID from the button's data-id attribute.
+                    var productID = button.dataset.id;
+
+                    // Pass the product ID to the handler function.
+                    addToCart(productID);
+                });
+            }
+
+            // -------------------------------------------------------
+            // Handler: addToCart(productID)
+            // Checks if the product already exists in the cart array.
+            //   - If YES: increment its quantity.
+            //   - If NO:  push a new object { id, quantity: 1 }.
+            // Then update the cart state (header badge count).
+            // -------------------------------------------------------
+            function addToCart(productID) {
+                // .find() returns the first matching object, or undefined.
+                var existingItem = cart.find(function (item) {
+                    return item.id === productID;
+                });
+
+                if (existingItem) {
+                    // Product already in cart -> increment quantity
+                    existingItem.quantity++;
+                } else {
+                    // Product not in cart -> push new entry with quantity = 1
+                    cart.push({ id: productID, quantity: 1 });
+                }
+
+                // Save cart to localStorage so it persists across pages
+                localStorage.setItem("cart", JSON.stringify(cart));
+
+                // Update the cart badge in the header
+                updateCartBadge();
+
+                // Log to console for verification
+                console.log("Cart updated:", cart);
+            }
+
+            // -------------------------------------------------------
+            // Helper: Update the cart item count badge in the header
+            // -------------------------------------------------------
+            function updateCartBadge() {
+                // Calculate the total quantity of all items in the cart
+                var totalItems = cart.reduce(function (sum, item) {
+                    return sum + item.quantity;
+                }, 0);
+
+                // Update the minicart badge in the header
+                var badge = document.querySelector(".hm-minicart .cart-item-count");
+                if (badge) {
+                    badge.textContent = totalItems;
+                }
+
+                // Also re-render the minicart dropdown
+                renderMiniCart();
+            }
+
+            // =========================================================
+            // MINICART DROPDOWN: Render cart items in the header dropdown
+            // =========================================================
+
+            // -------------------------------------------------------
+            // Fetch products.json and render minicart items
+            // -------------------------------------------------------
+            async function renderMiniCart() {
+                var minicartList = document.getElementById("minicart-items");
+                var minicartSubtotal = document.getElementById("minicart-subtotal");
+                var minicartHeaderTotal = document.getElementById("minicart-header-total");
+                var badge = document.querySelector(".hm-minicart .cart-item-count");
+
+                // Re-read cart from localStorage
+                cart = JSON.parse(localStorage.getItem("cart") || "[]");
+
+                // Update badge count
+                var totalItems = cart.reduce(function (sum, item) {
+                    return sum + item.quantity;
+                }, 0);
+                if (badge) badge.textContent = totalItems;
+
+                // If cart is empty, show empty state
+                if (!cart || cart.length === 0) {
+                    if (minicartList) minicartList.innerHTML = '<li style="text-align:center; padding:20px; color:#888;"><i class="fa fa-shopping-cart" style="font-size:24px; display:block; margin-bottom:8px;"></i>Your cart is empty</li>';
+                    if (minicartSubtotal) minicartSubtotal.textContent = "$0.00";
+                    if (minicartHeaderTotal) minicartHeaderTotal.textContent = "$0.00";
+                    return;
+                }
+
+                try {
+                    var response = await fetch(PRODUCTS_URL);
+                    if (!response.ok) throw new Error("HTTP error " + response.status);
+                    var products = await response.json();
+
+                    var grandTotal = 0;
+                    var html = "";
+
+                    cart.forEach(function (cartItem) {
+                        var product = products.find(function (p) {
+                            return String(p.id) === String(cartItem.id);
+                        });
+                        if (!product) return;
+
+                        var unitPrice = parseFloat(product.price.replace(/[^0-9.]/g, ""));
+                        var subtotal = unitPrice * cartItem.quantity;
+                        grandTotal += subtotal;
+
+                        html += '<li>' +
+                            '<a href="' + (product.productLink || 'single-product.html') + '" class="minicart-product-image">' +
+                                '<img src="' + product.image + '" alt="' + escapeHtml(product.name) + '">' +
+                            '</a>' +
+                            '<div class="minicart-product-details">' +
+                                '<h6><a href="' + (product.productLink || 'single-product.html') + '">' + escapeHtml(product.name) + '</a></h6>' +
+                                '<span>' + product.price + ' x ' + cartItem.quantity + '</span>' +
+                            '</div>' +
+                            '<button class="close minicart-remove-btn" title="Remove" data-id="' + cartItem.id + '">' +
+                                '<i class="fa fa-close"></i>' +
+                            '</button>' +
+                            '</li>';
+                    });
+
+                    if (minicartList) minicartList.innerHTML = html;
+                    if (minicartSubtotal) minicartSubtotal.textContent = "$" + grandTotal.toFixed(2);
+                    if (minicartHeaderTotal) minicartHeaderTotal.textContent = "$" + grandTotal.toFixed(2);
+
+                } catch (error) {
+                    console.error("Error loading minicart:", error);
+                }
+            }
+
+            // -------------------------------------------------------
+            // Event Delegation: Handle remove from minicart dropdown
+            // -------------------------------------------------------
+            (function() {
+                document.addEventListener("click", function(e) {
+                    var removeBtn = e.target.closest(".minicart-remove-btn");
+                    if (!removeBtn) return;
+                    e.preventDefault();
+
+                    var productID = removeBtn.dataset.id;
+
+                    // Remove item from cart array
+                    cart = cart.filter(function(item) {
+                        return String(item.id) !== String(productID);
+                    });
+
+                    // Save to localStorage
+                    localStorage.setItem("cart", JSON.stringify(cart));
+
+                    // Re-render minicart
+                    renderMiniCart();
+                });
+            })();
         </script>
     </body>
 
