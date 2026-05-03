@@ -1605,10 +1605,17 @@
 
             // -------------------------------------------------------
             // Decision: "Select Category" path
-            // User clicks on a category link -> System processes filter
+            // User clicks on a category link -> Fetch from Express API
+            // 
+            // REQUEST CYCLE EXPLANATION:
+            // 1. ACTION: User clicks a category link on the UI.
+            // 2. PREPARATION: JS intercepts click, prevents default navigation, and gets category value.
+            // 3. REQUEST: A fetch() GET request is sent to http://localhost:3000/api/products?category=val
+            // 4. PROCESSING: Express server returns filtered JSON. We parse this payload.
+            // 5. UI UPDATE: We clear #product-container (showing a loader), then render new filtered products.
             // -------------------------------------------------------
             function setupCategoryLinks() {
-                document.addEventListener("click", function(e) {
+                document.addEventListener("click", async function(e) {
                     var link = e.target.closest(".category-link");
                     if (!link) return;
                     e.preventDefault();
@@ -1621,12 +1628,39 @@
 
                     setActiveCategoryLink(category);
 
-                    var filtered = filterProducts(allProducts, currentKeyword, currentCategory);
+                    var apiUrl = "http://localhost:3000/api/products";
+                    if (category && category !== "all") {
+                        apiUrl += "?category=" + encodeURIComponent(category);
+                    }
+                    
+                    var container = document.getElementById("product-container");
+                    if (container) {
+                        container.innerHTML = '<div class="col-12 text-center" style="padding: 60px 0;">' +
+                                              '<i class="fa fa-spinner fa-spin" style="font-size: 40px; color: #e23e57;"></i>' +
+                                              '<p style="margin-top: 15px; color: #666;">Fetching products from API...</p>' +
+                                              '</div>';
+                    }
 
-                    renderProducts(filtered);
-                    updateToolbarCount(filtered.length, allProducts.length);
-                    updateActiveFilterDisplay();
-                    scrollToProducts();
+                    try {
+                        var response = await fetch(apiUrl);
+                        if (!response.ok) throw new Error("HTTP error! Status: " + response.status);
+                        
+                        var jsonPayload = await response.json();
+                        var productsArray = jsonPayload.data || jsonPayload;
+                        
+                        renderProducts(productsArray);
+                        updateToolbarCount(productsArray.length, allProducts.length);
+                        updateActiveFilterDisplay();
+                        scrollToProducts();
+                    } catch (error) {
+                        console.error("Error fetching data from API:", error);
+                        if (container) {
+                            container.innerHTML = '<div class="col-12 text-center" style="padding: 60px 0;">' +
+                                                  '<i class="fa fa-exclamation-triangle" style="font-size: 40px; color: #e23e57;"></i>' +
+                                                  '<p style="margin-top: 15px; color: #666;">Error loading products. Is the Express server running?</p>' +
+                                                  '</div>';
+                        }
+                    }
                 });
             }
 

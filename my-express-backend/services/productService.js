@@ -62,9 +62,10 @@ const getAllProducts = (category) => {
     let products = JSON.parse(rawData);
 
     // Step 3: If a category filter was provided, apply it.
+    // We check `product.category` exists before calling `.toLowerCase()` to prevent runtime errors.
     if (category) {
         products = products.filter(
-            (product) => product.category.toLowerCase() === category.toLowerCase()
+            (product) => product.category && product.category.toLowerCase() === category.toLowerCase()
         );
     }
 
