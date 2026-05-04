@@ -39,6 +39,7 @@ const cors = require('cors');        // Middleware to enable Cross-Origin Resour
 // --- Import Route Modules ---
 // Each route module handles a specific resource (e.g., products, users, orders).
 const productRoutes = require('./routes/productRoutes');
+const authRoutes = require('./routes/authRoutes');
 
 // --- Initialize the Express Application ---
 const app = express();
@@ -100,6 +101,7 @@ app.use(express.json());
 //   router.get('/:id')  in productRoutes → becomes GET /api/products/:id
 //
 app.use('/api/products', productRoutes);
+app.use('/api', authRoutes);
 
 /**
  * Root route — a simple health check endpoint.
