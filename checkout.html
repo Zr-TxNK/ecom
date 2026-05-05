@@ -484,7 +484,7 @@
                     </div>
                     <div class="row">
                         <div class="col-lg-6 col-12">
-                            <form action="#">
+                            <form action="#" id="checkout-form">
                                 <div class="checkbox-form">
                                     <h3>Billing Details</h3>
                                     <div class="row">
@@ -551,7 +551,13 @@
                                         <div class="col-md-6">
                                             <div class="checkout-form-list">
                                                 <label>Email Address <span class="required">*</span></label>
-                                                <input placeholder="" type="email">
+                                                <input id="checkout-email" placeholder="your@email.com" type="email">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="checkout-form-list">
+                                                <label>Credit Card Number <span class="required">*</span></label>
+                                                <input id="checkout-creditcard" placeholder="16-digit card number" type="text" maxlength="16">
                                             </div>
                                         </div>
                                         <div class="col-md-6">
@@ -743,8 +749,10 @@
                                           </div>
                                         </div>
                                         <div class="order-button-payment">
-                                            <input value="Place order" type="submit">
+                                            <button type="button" id="place-order-btn" style="background:#333; color:#fff; border:none; padding:10px 30px; text-transform:uppercase; font-weight:600; font-size:14px; cursor:pointer; width:100%;">Place order</button>
                                         </div>
+                                        <!-- Checkout message area (success/error feedback) -->
+                                        <div id="checkout-message" style="margin-top:15px; padding:12px; border-radius:4px; display:none; text-align:center; font-weight:500;"></div>
                                     </div>
                                 </div>
                             </div>
@@ -1024,6 +1032,8 @@
         <script src="js/scrollUp.min.js"></script>
         <!-- Main/Activator js -->
         <script src="js/main.js"></script>
+        <!-- Checkout Logic (connects form to POST /api/checkout) -->
+        <script src="js/checkout.js"></script>
     </body>
 
 <!-- checkout31:27-->

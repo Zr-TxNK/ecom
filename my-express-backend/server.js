@@ -39,6 +39,7 @@ const cors = require('cors');        // Middleware to enable Cross-Origin Resour
 // --- Import Route Modules ---
 // Each route module handles a specific resource (e.g., products, users, orders).
 const productRoutes = require('./routes/productRoutes');
+const checkoutRoutes = require('./routes/checkoutRoutes');
 const authRoutes = require('./routes/authRoutes');
 
 // --- Initialize the Express Application ---
@@ -101,6 +102,7 @@ app.use(express.json());
 //   router.get('/:id')  in productRoutes → becomes GET /api/products/:id
 //
 app.use('/api/products', productRoutes);
+app.use('/api/checkout', checkoutRoutes);
 app.use('/api', authRoutes);
 
 /**
@@ -115,6 +117,7 @@ app.get('/', (req, res) => {
             allProducts: 'GET /api/products',
             filterByCategory: 'GET /api/products?category=Laptops',
             singleProduct: 'GET /api/products/:id',
+            checkout: 'POST /api/checkout',
         },
     });
 });
