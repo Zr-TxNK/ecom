@@ -41,6 +41,7 @@ const cors = require('cors');        // Middleware to enable Cross-Origin Resour
 const productRoutes = require('./routes/productRoutes');
 const checkoutRoutes = require('./routes/checkoutRoutes');
 const authRoutes = require('./routes/authRoutes');
+const orderRoutes = require('./routes/orderRoutes');
 
 // --- Initialize the Express Application ---
 const app = express();
@@ -104,6 +105,7 @@ app.use(express.json());
 app.use('/api/products', productRoutes);
 app.use('/api/checkout', checkoutRoutes);
 app.use('/api', authRoutes);
+app.use('/api/orders', orderRoutes);
 
 /**
  * Root route — a simple health check endpoint.
@@ -118,6 +120,9 @@ app.get('/', (req, res) => {
             filterByCategory: 'GET /api/products?category=Laptops',
             singleProduct: 'GET /api/products/:id',
             checkout: 'POST /api/checkout',
+            createOrder: 'POST /api/orders',
+            allOrders: 'GET /api/orders',
+            singleOrder: 'GET /api/orders/:id',
         },
     });
 });
